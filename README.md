@@ -78,7 +78,6 @@ This project is part of a 10 Academy KAIM2 Week 3 challenge. Contributions, sugg
 
 ## Acknowledgments
 - 10 Academy for providing the challenge and dataset
-- AlphaCare Insurance Solutions for the business context
 
 ## Contact
 For any queries regarding this project, please open an issue in this repository.
