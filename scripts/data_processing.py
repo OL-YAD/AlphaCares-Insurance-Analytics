@@ -112,6 +112,34 @@ def plot_boxplot(df, x, y):
     plt.xticks(rotation=45)
     plt.show()
 
+
+def cap_outliers(df, columns=None):
+    """
+    Cap outliers in specified numeric columns using the IQR method.
+    
+    :param df: pandas DataFrame
+    :param columns: list of column names to process (if None, all numeric columns will be processed)
+    :return: DataFrame with capped outliers
+    """
+    # Create a copy of the DataFrame to avoid SettingWithCopyWarning
+    df_capped = df.copy()
+    
+    if columns is None:
+        columns = df_capped.select_dtypes(include=[np.number]).columns
+    
+    for column in columns:
+        Q1 = df_capped[column].quantile(0.25)
+        Q3 = df_capped[column].quantile(0.75)
+        IQR = Q3 - Q1
+        lower_bound = Q1 - 1.5 * IQR
+        upper_bound = Q3 + 1.5 * IQR
+        
+        df_capped.loc[df_capped[column] < lower_bound, column] = lower_bound
+        df_capped.loc[df_capped[column] > upper_bound, column] = upper_bound
+    
+    return df_capped
+
+
 # outlier plot for each individual numeric column
 def outlier_box_plots(df):
     for column in df:
