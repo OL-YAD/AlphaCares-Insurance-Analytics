@@ -35,11 +35,17 @@ TellCo-Telecom-Analysis/
 │   └── __init__.py
 ├── notebooks/
 │   ├── __init__.py
-│   └── README.md                       # Description of notebooks directory 
+|   ├── insurance_EDA.ipynb            # Jupyter notebook for data cleaning and EDA analysis
+|   ├── hypothesis_analysis.ipynb      # Jupyter notebook for A/B Hypothesis Testing analysis 
+|   ├── statistical_modeling.ipynb     # Jupyter notebook for Statistical Modeling analysis
+│   └── README.md                      # Description of notebooks directory 
 ├── tests/
 │   └── __init__.py
 └── scripts/
     ├── __init__.py
+    ├── data_processing.py          #  contains a script for data processing and EDA analysis 
+    ├── hypothesis_analysis.py      #  contains a script file for A/B Hypothesis testing 
+    ├── statistical_modeling.py     #  contains a script file for Statistical modeling 
     └── README.md                   # Description of scripts directory
     
 ```
