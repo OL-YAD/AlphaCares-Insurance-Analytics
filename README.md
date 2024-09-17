@@ -15,7 +15,6 @@ This repository contains the analysis of historical insurance claim data for Alp
 1. Exploratory Data Analysis (EDA)
 2. A/B Hypothesis Testing
 3. Statistical Modeling
-4. Machine Learning for Premium Prediction
 
 
 ## Project Structure
