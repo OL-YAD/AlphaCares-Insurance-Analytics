@@ -24,7 +24,9 @@ This repository contains the analysis of historical insurance claim data for Alp
 ## notebooks Folder/ 
 
 ```
-    `insurance_EDA.ipynb`        : Jupyter notebook for data cleaning and EDA analysis
+    `insurance_EDA.ipynb`           : Jupyter notebook for data cleaning and EDA analysis
+    `hypothesis_analysis.ipynb`     : Jupyter notebook for A/B Hypothesis Testing analysis 
+    `statistical_modeling.ipynb`    : Jupyter notebook for Statistical Modeling analysis
 ```
 
 ## Setup Instructions
