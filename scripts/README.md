@@ -24,6 +24,8 @@ This repository contains the analysis of historical insurance claim data for Alp
 
 ```
     `data_processing.py`          : contains a script for data processing and EDA analysis 
+    `hypothesis_analysis.py`      : contains a script file for A/B Hypothesis testing 
+    `statistical_modeling.py`     : contains a script file for Statistical modeling 
 
 ```
 
