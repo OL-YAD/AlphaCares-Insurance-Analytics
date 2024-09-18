@@ -10,108 +10,121 @@ from sklearn.linear_model import LinearRegression
 from sklearn.tree import DecisionTreeRegressor
 from sklearn.ensemble import RandomForestRegressor
 from xgboost import XGBRegressor
-from sklearn.metrics import mean_squared_error, r2_score
+from sklearn.metrics import mean_squared_error, r2_score, mean_absolute_error
 import shap
 
 
-def prepare_features(df, numeric_features=None, categorical_features=None):
-    # Default to all numeric and categorical features if none are provided
-    if numeric_features is None:
-        numeric_features = df.select_dtypes(include=['int64', 'float64']).columns
-    if categorical_features is None:
-        categorical_features = df.select_dtypes(include=['object', 'bool']).columns
-    
-    # Remove target variables from features
-    features = list(set(numeric_features) | set(categorical_features) - set(['TotalPremium', 'TotalClaims']))
-    
-    return features
+class Modelling:
+    def __init__(self, data):
+        self.data = data
 
 
-def label_encode_columns(df, categorical_features):
-    # Apply LabelEncoder to each categorical column separately
-    for col in categorical_features:
-        le = LabelEncoder()
-        df[col] = le.fit_transform(df[col])
-    return df
+    def preprocess(self, num_cols: list)->pd.DataFrame:
+        '''
+        This funciton normalizes teh data using standard scaler
 
-def preprocess_data(df, features):
-    # Separate features and target
-    X = df[features]
-    y_premium = df['TotalPremium']
-    y_claims = df['TotalClaims']
-    
-    # Split the data
-    X_train, X_test, y_premium_train, y_premium_test, y_claims_train, y_claims_test = train_test_split(
-        X, y_premium, y_claims, test_size=0.2, random_state=42)
-    
-    # Identify numeric and categorical columns
-    numeric_features = X.select_dtypes(include=['int64', 'float64']).columns
-    categorical_features = X.select_dtypes(include=['object', 'bool']).columns
-    
-    # Apply LabelEncoder to categorical features
-    X_train = label_encode_columns(X_train, categorical_features)
-    X_test = label_encode_columns(X_test, categorical_features)
-    
-    # Create preprocessing steps (now only for numeric features since categorical are label encoded)
-    numeric_transformer = SimpleImputer(strategy='mean')
-    
-    # Combine preprocessing steps
-    preprocessor = ColumnTransformer(
-        transformers=[
-            ('num', numeric_transformer, numeric_features)
-        ],
-        remainder='passthrough'  # To keep the label-encoded categorical columns
-    )
-    
-    return X_train, X_test, y_premium_train, y_premium_test, y_claims_train, y_claims_test, preprocessor
+        Parameters:
+            num_cols(list): list of numerical columsn to process
 
-def build_models():
-    models = {
-        'Linear Regression': LinearRegression(),
-        'Decision Tree': DecisionTreeRegressor(random_state=42),
-        'Random Forest': RandomForestRegressor(n_estimators=100, random_state=42),
-        'XGBoost': XGBRegressor(n_estimators=100, random_state=42)
-    }
-    return models
+        Returns:
+            pd.DataFrame
+        '''
+        scaler = StandardScaler()
+        scaled_data = scaler.fit_transform(self.data[num_cols])
+        scaled_data.DataFrame(scaled_data, columns=num_cols)
 
-def train_and_evaluate_models(X_train, X_test, y_train, y_test, preprocessor, models):
-    results = {}
-    for name, model in models.items():
-        # Create a pipeline with preprocessor and model
-        pipeline = Pipeline([
-            ('preprocessor', preprocessor),
-            ('regressor', model)
-        ])
-        
-        # Fit the pipeline
-        pipeline.fit(X_train, y_train)
-        
-        # Make predictions
-        y_pred = pipeline.predict(X_test)
-        
-        # Calculate metrics
+        return scaled_data
+
+
+    def split_data(self, X, y, test_size = 0.2):
+        '''
+        Splits the data to training and testing
+
+        Parameters:
+            X: Features
+            y: label
+
+        Returns: 
+            X_train, X_test, y_train, y_test 
+        '''
+        X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=test_size, random_state=42)
+
+        return X_train, X_test, y_train, y_test 
+
+
+    def model_testing(self, model, X_test, y_test):
+        '''
+        This function calculates the accuracy of the model
+
+        Parameters:
+            mode: A model that is fitted
+            X_test
+            y_test
+        '''
+        y_pred = model.predict(X_test)
+
+        # Measure accuracy
+        mae = mean_absolute_error(y_test, y_pred)
         mse = mean_squared_error(y_test, y_pred)
+        rmse = np.sqrt(mse)
         r2 = r2_score(y_test, y_pred)
-        
-        results[name] = {'MSE': mse, 'R2': r2, 'Model': pipeline}
-    
-    return results
 
-def analyze_feature_importance(model, X):
-    # For tree-based models, we can use feature_importances_
-    if hasattr(model, 'feature_importances_'):
-        importances = model.feature_importances_
-        feature_importance = pd.DataFrame({'feature': X.columns, 'importance': importances})
-        feature_importance = feature_importance.sort_values('importance', ascending=False)
-        return feature_importance
-    else:
-        return None
+        # Output the metrics
+        print("Mean Absolute Error (MAE):", mae)
+        print("Mean Squared Error (MSE):", mse)
+        print("Root Mean Squared Error (RMSE):", rmse)
+        print("R-squared:", r2)
 
-def interpret_model_with_shap(model, X):
-    # Create a SHAP explainer
-    explainer = shap.TreeExplainer(model)
+
+# plot prediction vs actual value for each model 
+def plot_predictions_vs_actuals(model, X_test, y_premium_test):
+    # Get predictions from the model
+    y_pred = model.predict(X_test)
+
+    # Create scatter plot
+    plt.figure(figsize=(8, 6))
+    plt.scatter(y_premium_test, y_pred, alpha=0.6, color='b')
     
-    # Calculate SHAP values
-    shap_values = explainer.shap_values(X)
+    # Add line for perfect prediction
+    plt.plot([min(y_premium_test), max(y_premium_test)], [min(y_premium_test), max(y_premium_test)], color='red', linewidth=2)
+
+    # Add labels and title
+    plt.xlabel('Actual Values')
+    plt.ylabel('Predicted Values')
+    plt.title(f'{model.__class__.__name__} Predictions vs Actual Values')
+
+    plt.grid(True)
+    plt.show()
+
+
+# a single scatter plot for model predictions vs actual values
+def plot_all_models_predictions(models_list, X_test, y_premium_test, model_names):
+    plt.figure(figsize=(10, 8))
+
+    # Different markers or colors for each model
+    markers = ['o', 's', '^', 'D']
+    colors = ['blue', 'green', 'orange', 'purple']
     
-    return shap_values, X
+    # Loop through each model and plot its predictions
+    for idx, (model, model_name) in enumerate(models_list):
+        # Get predictions
+        y_pred = model.predict(X_test)
+
+        # Plot actual vs predicted values
+        plt.scatter(y_premium_test, y_pred, alpha=0.6, marker=markers[idx], color=colors[idx], label=model_name)
+    
+    # Plot the perfect prediction line
+    plt.plot([min(y_premium_test), max(y_premium_test)], [min(y_premium_test), max(y_premium_test)], color='red', linewidth=2, label='Perfect Prediction')
+
+    # Add labels and title
+    plt.xlabel('Actual Values')
+    plt.ylabel('Predicted Values')
+    plt.title('Predictions vs Actual Values for TotalPremium')
+
+    # Show legend to differentiate models
+    plt.legend()
+
+    # Show grid for readability
+    plt.grid(True)
+
+    plt.show()
